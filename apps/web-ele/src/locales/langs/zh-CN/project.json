@@ -1,0 +1,9 @@
+{
+  "title": "项目",
+  "management" : {
+    "title": "项目管理"
+  },
+  "bug": {
+    "title" : "Bug"
+  }
+}

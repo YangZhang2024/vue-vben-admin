@@ -3,6 +3,7 @@
   "display": "Web Application",
   "extends": "./web.json",
   "compilerOptions": {
+    "exactOptionalPropertyTypes": true,
     "types": ["vite/client", "@vben/types/global"]
   }
 }

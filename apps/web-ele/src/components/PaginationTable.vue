@@ -1,112 +1,101 @@
 <script lang="ts" setup>
-import { ref } from 'vue';
+import { type TableOption } from '@vben/types';
 
-import { type ColumnOption } from '@vben/types';
-
-// const props = defineProps({
-//   pageIndex: {
-//     type: Number,
-//     default: 1,
-//   },
-//   pageLength: {
-//     type: Number,
-//     default: 10,
-//   },
-//   totalSize: {
-//     type: Number,
-//     default: 0,
-//   },
-//   data: {
-//     type: Array,
-//     default: () => [],
-//   },
-//   columnOption: ColumnOption,
-// });
-
-const {
-  pageIndexProp = 1,
-  pageLengthProp = 10,
-  totalSizeProp = 0,
-} = defineProps<{
-  columnOptions: ColumnOption[];
-  data: any[];
-  pageIndexProp?: number;
-  pageLengthProp?: number;
-  totalSizeProp?: number;
+const { table } = defineProps<{
+  table: TableOption<any>;
 }>();
-const emit = defineEmits(['pagination']);
-const pageIndex = ref(pageIndexProp);
-const pageLength = ref(pageLengthProp);
-const totalSize = ref(totalSizeProp);
-function handleSizeChange() {
-  if (pageIndex.value * pageLength.value > totalSize.value) {
-    pageIndex.value = 1;
+
+const emit = defineEmits(['pagination', 'selectedChanged']);
+
+function handleSizeChange(newPageSize: number) {
+  let newPageIndex = table.pageIndex;
+  if (table.pageIndex * newPageSize > table.total) {
+    newPageIndex = 1;
   }
-  emit('pagination', { pageIndex, pageLength });
+  emit('pagination', { newPageIndex, newPageSize });
 }
-function handleCurrentChange() {
+
+function handleCurrentChange(newPageIndex: number) {
   emit('pagination', {
-    pageIndex: pageIndex.value,
-    pageLength: pageLength.value,
+    pageIndex: newPageIndex,
+    pageLength: table.pageLength,
   });
 }
 
-const handleClick = () => {
-  // console.log('click');
-};
+function handleSelectionChange(selectedData: any[]) {
+  emit('selectedChanged', selectedData);
+}
 </script>
 
 <template>
-  <h1>pageIndex: {{ pageIndex }} pageLength: {{ pageLength }}</h1>
-  <el-table :data="data" style="width: 100%">
-    <template
-      v-for="(
-        { fixed, label, minWidth, prop, type, width }, index
-      ) in columnOptions"
+  <div>
+    <el-table
+      :data="table.data"
+      style="width: 100%"
+      @selection-change="handleSelectionChange"
     >
-      <el-table-column
-        v-if="type === 'default'"
-        :key="`selection_${index}`"
-        :fixed="fixed"
-        :label="label"
-        :min-width="minWidth"
-        :prop="prop"
-        :width="width"
-      />
-    </template>
-
-    <!--    <el-table-column label="Name" prop="name" width="120" />-->
-    <!--    <el-table-column label="State" prop="state" width="120" />-->
-    <!--    <el-table-column label="City" prop="city" width="120" />-->
-    <!--    <el-table-column label="Address" prop="address" width="600" />-->
-    <!--    <el-table-column label="Zip" prop="zip" width="120" />-->
-    <el-table-column fixed="right" label="Operations" min-width="120">
-      <template #default>
-        <el-button link size="small" type="primary" @click="handleClick">
-          Detail
-        </el-button>
-        <el-button link size="small" type="primary">Edit</el-button>
+      <template v-if="table.showSelect">
+        <el-table-column
+          :selectable="
+            (row: any, i: number) =>
+              table.selectable && table.selectable(row, i)
+          "
+          type="selection"
+          width="55"
+        />
       </template>
-    </el-table-column>
-  </el-table>
-  <div class="example-pagination-block">
-    <el-pagination
-      :current-page="pageIndex"
-      :page-size="pageLength"
-      :total="totalSize"
-      layout="prev, pager, next"
-      @current-change="handleCurrentChange"
-      @size-change="handleSizeChange"
-    />
+
+      <template
+        v-for="(
+          { fixed, label, minWidth, prop, type, width, operations }, _columnIdx
+        ) in table.columnOptions"
+        :key="`selection_${type}_${_columnIdx}`"
+      >
+        <el-table-column
+          :fixed="fixed"
+          :label="label"
+          :min-width="minWidth"
+          :prop="prop"
+          :width="width"
+        >
+          <template #default="{ row, $index }">
+            <template v-if="type === 'text'">{{ row[prop] }}</template>
+            <template v-else-if="type === 'operation'">
+              <template v-for="(opt, i) in operations" :key="`opt_${i}`">
+                <template v-if="opt.show()">
+                  <el-button
+                    :size="opt.size"
+                    :type="opt.type"
+                    link
+                    @click="opt.fn(row, $index)"
+                  >
+                    {{ opt.text }}
+                  </el-button>
+                </template>
+              </template>
+            </template>
+          </template>
+        </el-table-column>
+      </template>
+    </el-table>
+    <div class="example-pagination-block">
+      <el-pagination
+        :current-page="table.pageIndex"
+        :page-size="table.pageLength"
+        :total="table.total"
+        layout="prev, pager, next"
+        @current-change="handleCurrentChange"
+        @size-change="handleSizeChange"
+      />
+    </div>
   </div>
 </template>
 
 <style scoped>
-.example-pagination-block + .example-pagination-block {
+.example-pagination-block {
+  display: flex;
+  flex-direction: row-reverse;
   margin-top: 10px;
-}
-
-.example-pagination-block .example-demonstration {
   margin-bottom: 16px;
 }
 </style>

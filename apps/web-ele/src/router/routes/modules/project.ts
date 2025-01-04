@@ -1,7 +1,6 @@
 import type { RouteRecordRaw } from 'vue-router';
 
 import { BasicLayout } from '#/layouts';
-// import BugDetail from '#/views/project/bug/BugDetail.vue';
 
 const routes: RouteRecordRaw[] = [
   {
@@ -31,14 +30,14 @@ const routes: RouteRecordRaw[] = [
         path: '/project/bug',
         component: () => import('#/views/project/bug/index.vue'),
       },
-      // {
-      //   meta: {
-      //     title: 'bug 管理',
-      //   },
-      //   name: 'BugDetail',
-      //   path: '/project/bug-detail',
-      //   component: BugDetail,
-      // },
+      {
+        meta: {
+          title: 'bug 管理',
+        },
+        name: 'BugDetail',
+        path: '/project/bug-detail',
+        component: () => import('#/views/project/bug/BugDetail.vue'),
+      },
     ],
   },
 ];
